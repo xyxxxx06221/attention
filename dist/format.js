@@ -14,7 +14,7 @@
   }
   function render(source){
     const lines=String(source??'').replace(/\r/g,'').split('\n');const out=[];let paragraph=[],list=null,code=null;
-    const flush=()=>{if(paragraph.length){out.push('<p>'+inline(paragraph.join(' ').trim())+'</p>');paragraph=[];}};
+    const flush=()=>{if(paragraph.length){out.push('<p>'+paragraph.map(line=>inline(line.trim())).join('<br>')+'</p>');paragraph=[];}};
     const closeList=()=>{if(list){out.push('</'+list+'>');list=null;}};
     for(let i=0;i<lines.length;i++){
       const line=lines[i].trim();
@@ -30,7 +30,12 @@
       const heading=line.match(/^(#{1,6})\s+(.+)$/);
       if(heading){flush();closeList();const n=Math.min(4,heading[1].length+1);out.push('<h'+n+'>'+inline(heading[2])+'</h'+n+'>');continue;}
       const plain=line.replace(/^\*\*|\*\*$/g,'');
-      if((/^[一二三四五六七八九十]+、/.test(plain)||/^（[一二三四五六七八九十]+）/.test(plain))&&plain.length<65){flush();closeList();const n=plain.startsWith('（')?4:3;out.push('<h'+n+'>'+inline(plain)+'</h'+n+'>');continue;}
+      if(/^(?:[一二三四五六七八九十]+、|（[一二三四五六七八九十]+）)/.test(plain)){
+        flush();closeList();
+        const isHeading=plain.length<=40&&!/[，。！？；：,.!?;:]/.test(plain);
+        const tag=isHeading?(plain.startsWith('（')?'h4':'h3'):'p';
+        out.push('<'+tag+'>'+inline(isHeading?plain:line)+'</'+tag+'>');continue;
+      }
       const li=line.match(/^(?:[-*+]\s+|\d+[.)、]\s+)(.+)$/);
       if(li){flush();const tag=/^\d/.test(line)?'ol':'ul';if(list!==tag){closeList();out.push('<'+tag+'>');list=tag;}out.push('<li>'+inline(li[1])+'</li>');continue;}
       if(/^>\s?/.test(line)){flush();closeList();out.push('<blockquote>'+inline(line.replace(/^>\s?/,''))+'</blockquote>');continue;}

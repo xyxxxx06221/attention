@@ -23,6 +23,17 @@ class AttentionTests(unittest.TestCase):
   request=Mock(return_value=(json.dumps({'is_available':True,'balance_infos':[{'currency':'CNY','total_balance':'12.34','granted_balance':'0','topped_up_balance':'12.34'}]}),'unused'))
   first=balance.get(s,request,'now');self.assertEqual(first['status'],'ok');balance.get(s,request,'later',True);self.assertEqual(request.call_count,1)
   balance.checked=0;request.side_effect=ValueError('sensitive upstream text');failed=balance.get(s,request,'later');self.assertEqual(failed['status'],'error');self.assertEqual(failed['balances'],first['balances']);self.assertNotIn('sensitive',str(failed))
+ def test_native_search_usage_includes_cache_tokens(self):
+  s={'base_url':'https://api.deepseek.com','api_key':'test','model':'test'}
+  billing.record(app.db,s,{'usage':{'input_tokens':120,'output_tokens':30,'cache_read_input_tokens':40,'cache_creation_input_tokens':10}},'2026-09-24T10:00:00+08:00')
+  d=billing.summary(app.db,s,dt.datetime(2026,9,24))['usage']['today']
+  self.assertEqual((d['prompt_tokens'],d['completion_tokens'],d['cached_tokens'],d['total_tokens']),(170,30,40,200))
+ def test_native_missing_or_invalid_usage_remains_unmeasured(self):
+  s={'base_url':'https://api.deepseek.com','api_key':'test','model':'test'}
+  for usage in ({'input_tokens':120},{'input_tokens':True,'output_tokens':30},{'input_tokens':10,'cache_read_input_tokens':-1,'output_tokens':20}):
+   billing.record(app.db,s,{'usage':usage},'2026-09-24T10:00:00+08:00')
+  d=billing.summary(app.db,s,dt.datetime(2026,9,24))['usage']['today']
+  self.assertEqual((d['calls'],d['measured_calls']),(3,0))
  def test_balance_never_sends_key_to_proxy_host(self):
   request=Mock();self.assertEqual(billing.Balance().get({'base_url':'https://api.deepseek.com.example.com','api_key':'test'},request,'now')['status'],'unsupported');request.assert_not_called()
  def test_single_message_delete_excludes_history_and_auto_documents_and_restore(self):

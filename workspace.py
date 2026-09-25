@@ -217,6 +217,23 @@ class Workspace(ArchiveOperations):
                 result.append(d)
             for r in c.execute('SELECT * FROM daily_reports ORDER BY day DESC'):
                 result.append(dict(resource_kind='document',resource_id='daily:'+r['day'],id='daily:'+r['day'],title=r['day']+' 研判文稿',content=r['content'],date=r['updated'],search_text=r['content'],kind='日研判文稿'))
+            article_regions={r['id']:r['region'] for r in c.execute('SELECT id,region FROM articles')}
+            day_regions={}
+            for message in c.execute('SELECT created,contexts FROM active_messages'):
+                try:ids=json.loads(message['contexts'])
+                except (ValueError,TypeError):ids=[]
+                day_regions.setdefault(message['created'][:10],set()).update(article_regions[x] for x in ids if x in article_regions)
+            for r in result:
+                areas=set()
+                if r['resource_kind']=='article':areas.add(r['region'])
+                else:
+                    try:ids=json.loads(r.get('source_ids') or '[]')
+                    except (ValueError,TypeError):ids=[]
+                    if r.get('article_id'):ids.append(r['article_id'])
+                    areas.update(article_regions[x] for x in ids if x in article_regions)
+                    day=r['resource_id'] if r['resource_kind']=='minutes' else r['resource_id'][6:] if r['resource_id'].startswith('daily:') else None
+                    if day:areas.update(day_regions.get(day,set()))
+                r['regions']=sorted(areas) or ['unassigned']
             hidden={(r['kind'],r['resource_id']) for r in c.execute('SELECT kind,resource_id FROM resource_trash')}
             edits={(r['kind'],r['resource_id']):dict(r) for r in c.execute('SELECT * FROM document_edits')}
             for r in result:
@@ -225,8 +242,17 @@ class Workspace(ArchiveOperations):
                     r['title']=edit['title'];r['search_text']+=' '+edit['content'];r['edited']=True
             return result if include_trashed else [r for r in result if (r['resource_kind'],r['resource_id']) not in hidden]
 
-    def library(self, query='', kind='all', folder=None):
+    def library(self, query='', kind='all', folder=None, date_from='', date_to='', region='all'):
+        for value in (date_from,date_to):
+            if value:
+                try: dt.date.fromisoformat(value)
+                except ValueError: raise ValueError('请输入有效日期')
+        if date_from and date_to and date_from>date_to: raise ValueError('开始日期不能晚于结束日期')
         resources = self.resources()
+        region_options=sorted({area for r in resources for area in r.get('regions',[])})
+        if date_from:resources=[r for r in resources if (r.get('date') or '')[:10]>=date_from]
+        if date_to:resources=[r for r in resources if r.get('date') and r['date'][:10]<=date_to]
+        if region!='all':resources=[r for r in resources if region in r.get('regions',[])]
         with self.db() as c:
             folders = [dict(r) for r in c.execute('SELECT * FROM dossiers ORDER BY created,name')]
             links = [dict(r) for r in c.execute('SELECT * FROM dossier_items')]
@@ -247,7 +273,7 @@ class Workspace(ArchiveOperations):
             for k in ['search_text','body','content','raw_content']:
                 r.pop(k,None)
         resources.sort(key=lambda r:r['date'] or '',reverse=True)
-        return {'folders':folders,'items':resources,'counts':counts}
+        return {'folders':folders,'items':resources,'counts':counts,'region_options':region_options}
 
     def document(self, kind, rid):
         with self.db() as c:

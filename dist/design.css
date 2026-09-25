@@ -336,6 +336,30 @@ dialog::backdrop{background:rgba(32,41,56,.36);backdrop-filter:none;-webkit-back
 .reader-aside h3{font-size:17px}
 .reader-bottom .btn.primary{border-radius:7px}
 .btn.recording{background:var(--ui-selected);border-color:var(--action)}
+/* Generated answers share one typeface across prose, emphasis, headings and lists. */
+.formal{overflow-wrap:anywhere}
+.formal p{margin:0 0 .9em}
+.formal strong,.formal em,.formal li,.formal blockquote{font-family:inherit}
+.formal h2,.formal h3,.formal h4{font-family:inherit;font-weight:600;line-height:1.55;margin:1.35em 0 .6em;text-indent:0}
+.formal h2{font-size:1.2em}
+.formal h3{font-size:1.1em}
+.formal h4{font-size:1em}
+.formal ul,.formal ol{padding-left:1.6em;margin:.65em 0 1em}
+.formal li{margin:.35em 0;text-indent:0}
+.formal li p{margin:.35em 0;text-indent:0}
+.formal>:first-child{margin-top:0}
+.formal>:last-child{margin-bottom:0}
+.office-workspace .office-conversation .chat-message .formal strong,
+.office-workspace .office-conversation .chat-message .formal em{font-family:inherit}
+.office-workspace .office-conversation .chat-message .formal h2{font-size:1.2em}
+.office-workspace .office-conversation .chat-message .formal h3{font-size:1.1em}
+#article-answer,#analysis-answer{font-family:var(--sans);font-size:16px;line-height:1.8;letter-spacing:0}
+#article-answer p,#analysis-answer p{font-family:inherit;text-indent:0}
+#article-answer h2,#analysis-answer h2{font-size:1.2em}
+#article-answer h3,#analysis-answer h3{font-size:1.1em}
+.compose-actions{flex-wrap:wrap}
+[data-web-hint]{font:12px/1.6 var(--sans);color:var(--muted)}
+.table-scroll{max-width:100%;overflow-x:auto}
 @media(min-width:834px){
   .content{padding-top:32px}
   .page-heading{margin-bottom:24px}

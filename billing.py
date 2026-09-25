@@ -32,6 +32,12 @@ def record(db, settings, response, stamp):
         return value if type(value) is int and value >= 0 else None
     prompt, completion = number(usage.get('prompt_tokens')), number(usage.get('completion_tokens'))
     cached = number(usage.get('prompt_cache_hit_tokens', (usage.get('prompt_tokens_details') or {}).get('cached_tokens')))
+    if 'input_tokens' in usage and 'prompt_tokens' not in usage:
+        uncached = number(usage.get('input_tokens'))
+        cached = number(usage.get('cache_read_input_tokens', 0))
+        created = number(usage.get('cache_creation_input_tokens', 0))
+        prompt = uncached + cached + created if all(v is not None for v in (uncached, cached, created)) else None
+        completion = number(usage.get('output_tokens'))
     total = number(usage.get('total_tokens'))
     if total is None and prompt is not None and completion is not None:
         total = prompt + completion

@@ -55,11 +55,12 @@ class RevisionTests(unittest.TestCase):
  def test_folder_deletion_does_not_delete_or_respawn_files(self):
   aid=self.article();app.update_article({'id':aid,'action':'archive'});f=app.work.library()['folders'][0];app.work.file_resource(f['id'],'article',aid);app.work.manage_folder('delete',f['id']);app.init()
   self.assertNotIn(f['id'],[r['id'] for r in app.work.library()['folders']]);self.assertTrue(app.article_detail(aid)['body'])
- def test_explicit_search_and_conversation_isolation(self):
+ def test_unchecked_web_overrides_search_words_and_keeps_conversation_isolated(self):
   room=app.work.create_conversation('独立议题')['id'];app.save_settings({'base_url':'https://example.com/v1','model':'test','api_key':'dummy-test-only'})
   with patch('app.external_search',return_value={'query':'韩正 简历','items':[],'attempts':[],'error':'测试无来源'}) as search,patch('app.llm',return_value='测试答复'):
    result=app.chat({'question':'请搜索韩正简历','conversation_id':room,'web':False})
-  search.assert_called_once();self.assertEqual(result['conversation_id'],room)
+  search.assert_not_called();self.assertEqual(result['conversation_id'],room)
+  self.assertIn('仅查本地',result['answer'])
   with app.db() as c:self.assertEqual(c.execute('SELECT DISTINCT scope FROM messages').fetchone()[0],room)
  def test_permanent_delete_removes_personal_article_versions(self):
   aid=self.article();app.work.edit_document('article',aid,'个人标题','个人文字',0);app.update_article({'id':aid,'action':'delete','confirm':aid})

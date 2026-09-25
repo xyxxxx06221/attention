@@ -13,6 +13,10 @@ def official(url):
     host=urlsplit(url).hostname or ''
     return any(host==d or host.endswith('.'+d) for d in OFFICIAL)
 
+def primary(url):
+    host=urlsplit(url).hostname or ''
+    return official(url) or any(host==d or host.endswith('.'+d) for d in ('edu.cn','ac.cn','cas.cn'))
+
 def query_plan(question,article_title=''):
     text=re.sub(r'\s+',' ',question).strip()
     bio=re.search(r'([\u4e00-\u9fff]{2,4})(?:同志)?(?:的)?(?:简历|履历)',text)
@@ -69,39 +73,49 @@ class Research:
     def search(self,question,article_title=''):
         plan=query_plan(question,article_title)
         if not plan['query']:raise ValueError('请补充要查证的对象')
-        diagnostics=[];candidates=[];seen=set()
+        diagnostics=[];candidates=[];seen=set();read_urls=set();items=[]
         registry=Path(__file__).parent/'sources'/'references.json'
         for r in json.loads(registry.read_text()) if registry.exists() else []:
             if r['subject']==plan['subject'] and r['intent']==plan['intent']:
                 candidates.append(r|{'snippet':r['subject']});seen.add(r['url'])
         # Prefer primary sources for people and geography; still allow broader research.
-        queries=[plan['query']+' site:gov.cn',plan['query']+' site:news.cn'] if plan['intent']=='biography' else [plan['query']+' site:gov.cn',plan['query']]
-        attempts=[] if len(candidates)>=2 else [('duckduckgo',queries[0]),('duckduckgo',queries[1]),('bing',plan['query'])]
+        queries=[plan['query']+' site:gov.cn',plan['query']]
+        attempts=[('duckduckgo',queries[0]),('duckduckgo',queries[1]),('bing',plan['query'])]
+        def read(r):
+            try:
+                raw,url=self.request(r['url'],official=official(r['url']));p=self.parse(raw,url,r['title']);body=p['body']
+                if len(body)<80 or not relevant(plan,p['title'],body):return None
+                if plan['intent']=='biography' and not re.search(r'简历|履历|年参加工作|参加工作|历任|年\d{1,2}月生',body+p['title']):return None
+                return {'title':p['title'],'url':url,'text':body[:18000],'published':p['published'],'type':'官方原文' if official(url) else '机构原文' if primary(url) else '外部网页正文'}
+            except Exception as exc:
+                self.event('search_source_failed',error=type(exc).__name__);return None
+        def read_pending():
+            pending=sorted((r for r in candidates if r['url'] not in read_urls),key=lambda r:not primary(r['url']))[:6]
+            read_urls.update(r['url'] for r in pending)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+                for result in pool.map(read,pending):
+                    if result and not any(x['url']==result['url'] for x in items):items.append(result)
+        if candidates:read_pending()
         for provider,query in attempts:
+            # A search hit is not evidence until its body can actually be read.
+            if len(items)>=2:break
             try:found=self.candidates(query,provider)
             except Exception as exc:
-                diagnostics.append({'provider':provider,'query':query,'accepted':0,'status':'unavailable'});self.event('search_provider_failed',provider=provider,error=type(exc).__name__);continue
+                diagnostics.append({'provider':provider,'query':query,'accepted':0,'status':'unavailable','reason':str(exc)[:240]});self.event('search_provider_failed',provider=provider,error=type(exc).__name__);continue
             accepted=0
             for r in found:
                 url=r['url'];host=urlsplit(url).hostname or ''
                 if url in seen or urlsplit(url).scheme not in ('https','http'):continue
                 if urlsplit(url).scheme=='http' and not official(url):continue
-                if plan['intent'] in ('biography','location') and not official(url):continue
+                if plan['intent'] in ('biography','location') and not primary(url):continue
                 if not relevant(plan,r['title'],r['snippet']):continue
                 seen.add(url);candidates.append(r);accepted+=1
-            diagnostics.append({'provider':provider,'query':query,'accepted':accepted,'status':'ok' if accepted else 'no_relevant_results'})
-            if len(candidates)>=3:break
-        candidates.sort(key=lambda r:not official(r['url']))
-        def read(r):
-            try:
-                raw,url=self.request(r['url'],official=official(r['url']));p=self.parse(raw,url,r['title']);body=p['body']
-                if len(body)<80 or not relevant(plan,p['title'],body):return None
-                # A biography request must retrieve biographical evidence, not a passing mention.
-                if plan['intent']=='biography' and not re.search(r'简历|履历|年参加工作|参加工作|历任|年\d{1,2}月生',body+p['title']):return None
-                return {'title':p['title'],'url':url,'text':body[:18000],'published':p['published'],'type':'官方原文' if official(url) else '外部网页正文'}
-            except Exception as exc:
-                self.event('search_source_failed',error=type(exc).__name__);return None
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:items=[r for r in pool.map(read,candidates[:6]) if r]
+            before=len(items);read_pending()
+            diagnostics.append({'provider':provider,'query':query,'accepted':accepted,'readable':len(items)-before,'status':'ok' if len(items)>before else 'no_readable_results' if accepted else 'no_relevant_results'})
         items.sort(key=lambda r:r['published'] or '',reverse=True)
         self.event('research_completed',sources=len(items),rejected=len(candidates)-len(items))
-        return {'items':items[:4],'query':plan['query'],'attempts':diagnostics,'error':'' if items else '没有找到可读取的相关网页；搜索入口可能不可用，本次未采用无关结果。'}
+        error=''
+        if not items:
+            reasons=list(dict.fromkeys(d['reason'] for d in diagnostics if d.get('reason')))
+            error='没有找到可读取的相关网页。'+('；'.join(reasons)+'。' if reasons else '检索结果未通过相关性或正文读取检查。')
+        return {'items':items[:4],'query':plan['query'],'attempts':diagnostics,'error':error}

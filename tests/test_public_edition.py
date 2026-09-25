@@ -80,7 +80,7 @@ class PublicEditionTests(unittest.TestCase):
             self.assertEqual(code, 200)
             self.assertNotIn('api_key', settings)
             self.assertNotIn('dummy-test-only', json.dumps(settings))
-            self.assertEqual(request('GET', '/api/runtime')[1]['application'], 'attention-local')
+            self.assertEqual(request('GET', '/api/runtime')[1]['application'], app.APPLICATION)
             self.assertEqual(request('GET', '/api/runtime', headers={'Host':'evil.example'})[0], 403)
             self.assertEqual(request('POST', '/api/settings', '{}', {'Content-Type':'application/json','Origin':'https://evil.example'})[0], 403)
             self.assertEqual(request('POST', '/api/settings', '{}', {'Content-Type':'text/plain'})[0], 415)
