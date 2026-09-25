@@ -1,12 +1,14 @@
 """Build on the target OS. Keep build output away from the checked-in dist/ UI."""
 import argparse
 import hashlib
+import importlib.metadata
 import json
 from pathlib import Path
 import platform
 import shutil
 import subprocess
 import sys
+import sysconfig
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,12 +27,21 @@ def main():
     if sys.platform not in ('win32', 'darwin'):
         raise SystemExit('Build Windows on Windows and macOS on macOS.')
     name = 'Zhuyi'
+    licenses = work / 'runtime-licenses'
+    licenses.mkdir(exist_ok=True)
+    candidates = [Path(sys.base_prefix) / 'LICENSE.txt', Path(sysconfig.get_path('stdlib')) / 'LICENSE.txt']
+    python_license = next((p for p in candidates if p.is_file()), ROOT / 'desktop-resources' / 'PYTHON-LICENSE.txt')
+    shutil.copyfile(python_license, licenses / 'PYTHON-LICENSE.txt')
+    distribution = importlib.metadata.distribution('pyinstaller')
+    bootloader_license = next(distribution.locate_file(p) for p in distribution.files if str(p).endswith('/licenses/COPYING.txt'))
+    shutil.copyfile(bootloader_license, licenses / 'PYINSTALLER-COPYING.txt')
     command = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--onedir', '--windowed',
                '--name', name, '--distpath', str(work / 'bundle'), '--workpath', str(work / 'work'),
                '--specpath', str(work), '--icon', str(ROOT / 'dist' / 'logo.png'),
                '--add-data', str(ROOT / 'dist') + ':dist',
                '--add-data', str(ROOT / 'LICENSE') + ':.', '--add-data', str(ROOT / 'NOTICE') + ':.',
                '--add-data', str(ROOT / 'README.md') + ':.']
+    command += ['--add-data', str(licenses) + ':runtime-licenses']
     if sys.platform == 'darwin':
         command += ['--osx-bundle-identifier', 'com.zhuyi.attention.local.v1']
     command += [str(ROOT / 'desktop.py')]

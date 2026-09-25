@@ -99,7 +99,10 @@ def init():
   editions.migrate_existing(c)
 def settings():
  p=DATA/'settings.json'
- if p.exists():return DEFAULT_SETTINGS|json.loads(p.read_text())
+ if p.exists():
+  try:raw=p.read_text(encoding='utf-8')
+  except UnicodeDecodeError:raw=p.read_text() # Preserve settings written by older builds in the system encoding.
+  return DEFAULT_SETTINGS|json.loads(raw)
  return DEFAULT_SETTINGS.copy()
 def model_configured(s):
  if not s.get('base_url') or not s.get('model'):return False
@@ -121,7 +124,7 @@ def save_settings(data):
   if u.scheme=='http' and u.hostname not in ('localhost','127.0.0.1','::1'):raise ValueError('远程接口必须使用 HTTPS')
  p=DATA/'settings.json';tmp=DATA/('settings-'+uid()+'.tmp')
  fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
- with os.fdopen(fd,'w') as f:json.dump(current,f,ensure_ascii=False,indent=2)
+ with os.fdopen(fd,'w',encoding='utf-8') as f:json.dump(current,f,ensure_ascii=False,indent=2)
  os.replace(tmp,p)
  return public_settings()
 def window(day=None):
@@ -771,7 +774,7 @@ class Handler(BaseHTTPRequestHandler):
    if path=='/api/metrics':return self.send(work.metrics(qs.get('period',['day'])[0],qs.get('day',[None])[0]))
    if path=='/api/logs':
     p=DATA/'logs'/'runtime.log'
-    return self.send({'lines':p.read_text().splitlines()[-100:] if p.exists() else []})
+    return self.send({'lines':p.read_text(encoding='utf-8',errors='replace').splitlines()[-100:] if p.exists() else []})
    if path=='/api/job':return self.send(JOB.copy())
    if path=='/api/search':return self.send(search_records(qs.get('q',[''])[0],qs.get('mode',['archive'])[0]))
    if path=='/api/sources':return self.send(active_sources())

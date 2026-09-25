@@ -75,7 +75,7 @@ class Research:
         if not plan['query']:raise ValueError('请补充要查证的对象')
         diagnostics=[];candidates=[];seen=set();read_urls=set();items=[]
         registry=Path(__file__).parent/'sources'/'references.json'
-        for r in json.loads(registry.read_text()) if registry.exists() else []:
+        for r in json.loads(registry.read_text(encoding='utf-8')) if registry.exists() else []:
             if r['subject']==plan['subject'] and r['intent']==plan['intent']:
                 candidates.append(r|{'snippet':r['subject']});seen.add(r['url'])
         # Prefer primary sources for people and geography; still allow broader research.

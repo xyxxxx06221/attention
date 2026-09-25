@@ -48,7 +48,11 @@ def main():
                 assert dashboard['articles'] == [] and not dashboard['settings'].get('has_api_key')
                 if attempt == 0:
                     api('/api/dossiers', {'name': '打包验证专题'})
+                    api('/api/settings', {'secretary_name': '阅文秘书', 'user_title': '阅读者'})
                 assert any(f['name'] == '打包验证专题' for f in api('/api/library')['folders'])
+                saved = json.loads((data / 'settings.json').read_text(encoding='utf-8'))
+                assert saved['secretary_name'] == '阅文秘书' and saved['user_title'] == '阅读者'
+                assert api('/api/dashboard')['settings']['secretary_name'] == '阅文秘书'
             finally:
                 try:
                     api('/api/shutdown', {})
