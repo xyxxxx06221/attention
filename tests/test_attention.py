@@ -3,7 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 import app
 import billing
 from relevance import relevance_score, used_citations
@@ -18,11 +18,12 @@ class AttentionTests(unittest.TestCase):
   billing.record(app.db,s,{},'2026-09-23T10:01:00+08:00')
   billing.record(app.db,{**s,'api_key':'other'},{'usage':{'total_tokens':9999}},'2026-09-23T10:00:00+08:00')
   d=billing.summary(app.db,s,dt.datetime(2026,9,23))['usage']['today'];self.assertEqual((d['calls'],d['measured_calls'],d['total_tokens'],d['cached_tokens']),(2,1,130,40))
- def test_balance_caches_and_failure_preserves_last_success(self):
+ @patch('billing.time.monotonic', side_effect=[1000,1000,1001,1301,1301])
+ def test_balance_caches_and_failure_preserves_last_success(self, clock):
   s={'base_url':'https://api.deepseek.com/v1','api_key':'test'};balance=billing.Balance()
   request=Mock(return_value=(json.dumps({'is_available':True,'balance_infos':[{'currency':'CNY','total_balance':'12.34','granted_balance':'0','topped_up_balance':'12.34'}]}),'unused'))
   first=balance.get(s,request,'now');self.assertEqual(first['status'],'ok');balance.get(s,request,'later',True);self.assertEqual(request.call_count,1)
-  balance.checked=0;request.side_effect=ValueError('sensitive upstream text');failed=balance.get(s,request,'later');self.assertEqual(failed['status'],'error');self.assertEqual(failed['balances'],first['balances']);self.assertNotIn('sensitive',str(failed))
+  request.side_effect=ValueError('sensitive upstream text');failed=balance.get(s,request,'later');self.assertEqual(failed['status'],'error');self.assertEqual(failed['balances'],first['balances']);self.assertNotIn('sensitive',str(failed))
  def test_native_search_usage_includes_cache_tokens(self):
   s={'base_url':'https://api.deepseek.com','api_key':'test','model':'test'}
   billing.record(app.db,s,{'usage':{'input_tokens':120,'output_tokens':30,'cache_read_input_tokens':40,'cache_creation_input_tokens':10}},'2026-09-24T10:00:00+08:00')
