@@ -39,7 +39,7 @@ def main():
                     raise AssertionError('Packaged app did not start')
                 assert runtime['application'] == 'zhuyi-local-v1' and runtime['version'] == '1.0.0'
                 assert Path(runtime['data_directory']).resolve() == data.resolve()
-                for path in ('/', '/app.js', '/release.js', '/release.css', '/wordmark.png', '/icons.woff2', '/reading-font.woff'):
+                for path in ('/', '/app.js', '/release.js', '/theme.js', '/tokens.css', '/components.css', '/shell.css', '/reading.css', '/wordmark.png', '/icons.woff2', '/reading-font.woff'):
                     with opener.open(base + path, timeout=10) as response:
                         assert response.status == 200 and len(response.read()) > 0, path
                 config = api('/api/source-config')

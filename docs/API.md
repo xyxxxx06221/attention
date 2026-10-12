@@ -25,6 +25,8 @@ v1.0.0 基础地址默认为 `http://127.0.0.1:8879`。仅支持本机调用，�
 | GET `/api/article?id=ID` | 查看文章 | 注意会记录打开状态，不是无副作用的探测接口 |
 | GET `/api/library?q=关键词` | 查看档案 | 建议用来验证导入 |
 
+期次的 `edition.status` 为 `partial` 表示采集确有缺失：某来源整体失败、单篇正文抓取失败，或文章日期无法确认。来源首页候选超过 45 条上限时，只在 `edition.report` 对应条目中记为 `bounded: true`；正文不足 100 字的快讯记入该条目的 `short` 计数。两者都不再把整期标为 `partial`，除非某来源只得到过短正文而没有任何入选文章。
+
 ## 秘书检索开关
 
 POST `/api/chat` 接受 `question`、可选的 `article_id` / `conversation_id`、布尔值 `web` 和可选参考网页 `url`。
@@ -62,4 +64,8 @@ POST `/api/chat` 接受 `question`、可选的 `article_id` / `conversation_id`�
 
 ## 专注阅读 UI 静态资源
 
-`design/focused-reading` 增加 `/focus.css`、`/focus.js`、`/icons.woff2` 与 `/reading-font.woff` 本地静态资源。字体响应分别使用 `font/woff2` 和 `font/woff`。现有 `/api/*` 请求字段、响应和业务行为保持不变。来源与采集仅移动了前端入口。
+界面由本机静态资源提供：脚本 `/format.js`、`/workbench.js`、`/attention.js`、`/focus.js`、`/release.js`、`/app.js` 与 `/theme.js`，样式 `/tokens.css`、`/components.css`、`/shell.css`、`/reading.css`，以及 `/icons.woff2`、`/reading-font.woff`、`/logo.png`、`/wordmark.png`。字体响应分别使用 `font/woff2` 和 `font/woff`。
+
+样式按职责分为四份：`tokens.css` 是设计令牌（浅色 / 深色配色、字体、圆角）与正文排版，`components.css` 是按钮、表单、标签、对话框等通用控件，`shell.css` 是侧栏与各工作页面，`reading.css` 是待阅列表、阅读器与原文标记。旧的 `/style.css`、`/design.css`、`/focus.css`、`/release.css` 已由它们取代，不再提供。`/theme.js` 仅在浏览器本地保存外观选择（浅色、深色或跟随系统），不发起任何请求。
+
+现有 `/api/*` 请求字段、响应和业务行为保持不变。

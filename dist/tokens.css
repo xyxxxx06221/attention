@@ -1,0 +1,314 @@
+/* ---------------------------------------------------------------------------
+   主一 design tokens and base rules.
+   Warm off-white paper, ink text, one teal accent (cyan in dark), hairline
+   borders, no gradients. Components use the semantic names below; values
+   change per theme only. theme.js sets [data-theme] before first paint.
+   --------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'Framework7 Icons';
+  src: url('/icons.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+/* Bundled fallback: only fetched when the host has none of the system families below. */
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('/reading-font.woff') format('woff');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Layout. focus.js and release.js read --nav-width and write --inbox-width / --reading-size. */
+  --nav-width: 180px;
+  --inbox-width: 368px;
+  --reading-size: 17px;
+  --page-max: 1200px;
+  --tab-h: 54px;
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'HarmonyOS Sans SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-serif: Georgia, 'Times New Roman', 'Songti SC', 'STSong', 'Noto Serif CJK SC', 'Source Han Serif SC', 'SimSun', serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+
+  /* Radius scale: mark 5 (tiny tags, swatches), control 8 (inputs, small blocks), tile 10 (list rows,
+     hover areas), card 12, panel 14 (wells), sheet 16 (dialogs); pills are fully round. */
+  --radius-mark: 5px;
+  --radius-control: 8px;
+  --radius-tile: 10px;
+  --radius-card: 12px;
+  --radius-panel: 14px;
+  --radius-sheet: 16px;
+  --radius-pill: 999px;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --bg: #faf9f6;
+  --bg-sunk: #f3f3ef;
+  --bg-muted: #e9ede9;
+  --surface: #ffffff;
+  --sidebar: #fdfdfb;
+  --field: #eef1ed;
+  /* Reading paper: a little lighter than the page ground. */
+  --paper: #fcfbf9;
+  --ink: #202a30;
+  --ink-2: #303c42;
+  --ink-3: #59656b;
+  --ink-4: #657176;
+  --prose-ink: #26323a;
+  --line: #dfe4e1;
+  --line-strong: #d1d9d5;
+  --line-soft: #e9ede9;
+  --accent: #176b75;
+  --accent-ink: #145f68;
+  --accent-soft: rgba(23, 107, 117, 0.08);
+  --accent-softer: rgba(23, 107, 117, 0.05);
+  --accent-line: rgba(23, 107, 117, 0.35);
+  --accent-contrast: #ffffff;
+  --note: #526f72;
+  --hot: #b3402a;
+  --hot-soft: rgba(179, 64, 42, 0.08);
+  --amber: #b8873a;
+  --amber-ink: #7c5a24;
+  --amber-soft: rgba(184, 135, 58, 0.1);
+  --ok: #2f7d5c;
+  --ok-ink: #2a6e51;
+  --ok-soft: rgba(47, 125, 92, 0.1);
+  --code-bg: #f6f7f4;
+  --selection: rgba(23, 107, 117, 0.16);
+  --backdrop: rgba(24, 32, 36, 0.42);
+  --shadow-card: 0 1px 2px rgba(32, 42, 48, 0.025);
+  --shadow-card-hover: 0 3px 12px rgba(32, 42, 48, 0.055);
+  --shadow-soft: 0 4px 12px rgba(28, 39, 51, 0.06);
+  --shadow-thumb: 0 1px 2px rgba(28, 39, 51, 0.1), 0 1px 1px rgba(28, 39, 51, 0.04);
+  --shadow-pop: 0 12px 32px rgba(28, 39, 51, 0.12);
+
+  /* Annotation inks: a wash for highlights, a line for underlines and strikes. */
+  --mark-red: #f5d6cf;      --mark-red-line: #a13d35;
+  --mark-yellow: #fbebaf;   --mark-yellow-line: #9a7411;
+  --mark-green: #d8ebd4;    --mark-green-line: #44773a;
+  --mark-blue: #d3e7f5;     --mark-blue-line: #326c9a;
+  --mark-purple: #e7daf4;   --mark-purple-line: #76539a;
+
+  accent-color: var(--accent);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #13191c;
+  --bg-sunk: #182024;
+  --bg-muted: #202a2f;
+  --surface: #1a2226;
+  --sidebar: #161e21;
+  --field: rgba(255, 255, 255, 0.06);
+  --paper: #13191c;
+  --ink: #e7eceb;
+  --ink-2: #d2dada;
+  --ink-3: #a5b0b3;
+  --ink-4: #89979d;
+  --prose-ink: #d7dfdf;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --accent: #12ccd8;
+  --accent-ink: #2ce2e8;
+  --accent-soft: rgba(18, 204, 216, 0.12);
+  --accent-softer: rgba(18, 204, 216, 0.06);
+  --accent-line: rgba(18, 204, 216, 0.4);
+  --accent-contrast: #000000;
+  --note: #8fb8a8;
+  --hot: #d86a52;
+  --hot-soft: rgba(216, 106, 82, 0.12);
+  --amber: #d3b26a;
+  --amber-ink: #d3b26a;
+  --amber-soft: rgba(211, 178, 106, 0.12);
+  --ok: #5fc79a;
+  --ok-ink: #7fd1ad;
+  --ok-soft: rgba(95, 199, 154, 0.12);
+  --code-bg: #10151c;
+  --selection: rgba(18, 204, 216, 0.22);
+  --backdrop: rgba(0, 0, 0, 0.6);
+  --shadow-card: none;
+  --shadow-card-hover: none;
+  --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-thumb: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 16px 40px rgba(0, 0, 0, 0.45);
+
+  --mark-red: rgba(216, 106, 82, 0.3);     --mark-red-line: #e08973;
+  --mark-yellow: rgba(211, 178, 106, 0.3); --mark-yellow-line: #d9bd7c;
+  --mark-green: rgba(95, 199, 154, 0.26);  --mark-green-line: #7fd1ad;
+  --mark-blue: rgba(96, 165, 220, 0.3);    --mark-blue-line: #8dbfe6;
+  --mark-purple: rgba(170, 140, 220, 0.3); --mark-purple-line: #bca6e6;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 14px/1.5 var(--font-sans);
+}
+
+h1, h2, h3, h4, p, blockquote, figure { margin: 0; }
+h1, h2, h3, h4 { color: var(--ink); font-weight: 650; }
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; }
+
+button, input, textarea, select { font: inherit; color: inherit; }
+button, a, summary { cursor: pointer; touch-action: manipulation; }
+button:disabled { cursor: default; opacity: 0.5; }
+summary { user-select: none; }
+
+::selection { background: var(--selection); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Quiet scrollbars for columns that scroll on their own. */
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
+.f7-icons {
+  display: inline-block;
+  flex-shrink: 0;
+  font: normal 400 18px/1 'Framework7 Icons';
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  color: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: -80px;
+  left: 12px;
+  z-index: 1000;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+}
+.skip-link:focus { top: 12px; }
+
+.muted { color: var(--ink-4); }
+.spacer { flex: 1; }
+
+/* ---------------------------------------------------------------------------
+   Long-form text: rendered Markdown (.formal) and article bodies (.article-text).
+   Set as Chinese magazines and news sites set it: a 760px column, 1.8 leading,
+   a little tracking, paragraphs a good breath apart and no first-line indent.
+   --------------------------------------------------------------------------- */
+
+.formal,
+.article-text {
+  color: var(--prose-ink);
+  font-size: 16px;
+  line-height: 1.8;
+  letter-spacing: 0.012em;
+  overflow-wrap: anywhere;
+}
+.formal > :first-child { margin-top: 0; }
+.formal > :last-child { margin-bottom: 0; }
+.formal p,
+.article-text p { margin: 0 0 1.2em; }
+.formal h2, .formal h3, .formal h4 {
+  margin: 1.8em 0 0.7em;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+.formal h2 { font-size: 1.26em; }
+.formal h3 { font-size: 1.1em; }
+.formal h4 { font-size: 1em; }
+.formal strong { color: var(--ink); font-weight: 650; }
+.formal a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 3px;
+}
+.formal a:hover { text-decoration-color: var(--accent); }
+.formal ul, .formal ol { margin: 0 0 1.2em; padding-left: 1.4em; }
+.formal li + li { margin-top: 0.35em; }
+.formal li::marker { color: var(--ink-4); }
+.formal blockquote {
+  margin: 0 0 1.2em;
+  padding: 0.1em 0 0.1em 1em;
+  border-left: 3px solid var(--line-strong);
+  color: var(--ink-3);
+}
+.formal code {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-mark);
+  background: var(--code-bg);
+  font: 0.86em var(--font-mono);
+}
+.formal pre {
+  margin: 0 0 1.2em;
+  padding: 0.9em 1em;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--code-bg);
+  font: 13px/1.65 var(--font-mono);
+}
+.formal pre code { padding: 0; border: 0; background: none; font-size: inherit; }
+.formal hr { margin: 2em 0; border: 0; border-top: 1px solid var(--line); }
+.table-scroll { max-width: 100%; margin: 0 0 1.2em; overflow-x: auto; }
+.formal table { border-collapse: collapse; font-size: 14px; line-height: 1.55; }
+.formal th, .formal td {
+  min-width: 4.5em;
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+.formal th { background: var(--bg-sunk); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

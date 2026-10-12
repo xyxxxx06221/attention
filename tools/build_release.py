@@ -14,7 +14,7 @@ def build():
     files=list(ROOT.glob('*.py'))
     files += [ROOT/name for name in ('LICENSE','NOTICE','README.md','SECURITY.md','启动主一.bat','停止主一.bat','启动主一.command','停止主一.command')]
     for folder in ('dist','docs','examples'):
-        files += [p for p in (ROOT/folder).rglob('*') if p.is_file() and p.name!='review.css']
+        files += [p for p in (ROOT/folder).rglob('*') if p.is_file()]
     files += [ROOT/'tools'/'agent_import.py']
     files=sorted(set(files))
     for p in files:

@@ -112,6 +112,39 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(data['edition_stats']['zhejiang']['total'],1)
         self.assertEqual(data['articles'][0]['editor'],'规则筛选')
 
+    def test_candidate_cap_is_reported_without_marking_edition_partial(self):
+        created=self.registry.save(self.verified(),True)
+        source=next(s for s in self.registry.sources() if s['id']==created['id'])
+        listing=''.join(f'<a href="/p{i}">关于完善公共服务政策的通知第{i}号文件</a>' for i in range(50))
+        article='<html><head><meta name="PubDate" content="2026-09-22 12:00:00"></head><body><h1>关于完善公共服务政策的通知</h1><p>'+'公共服务政策材料。'*40+'</p></body></html>'
+        def request(url,**kw):return (listing if url==source['url'] else article),url
+        with patch('app.active_sources',return_value=[source]),patch('app.request_url',side_effect=request),patch('app.llm'):
+            app.collect('2026-09-23')
+        edition=app.dashboard('2026-09-23')['edition']
+        self.assertTrue(edition['report'][0]['bounded'])
+        self.assertEqual(edition['report'][0]['failed'],0)
+        self.assertEqual(edition['status'],'ready')
+        def failing(url,**kw):
+            if url==source['url']:return listing,url
+            raise ValueError('timeout')
+        with app.db() as c:c.execute('DELETE FROM edition_items');c.execute('DELETE FROM articles')
+        with patch('app.active_sources',return_value=[source]),patch('app.request_url',side_effect=failing),patch('app.llm'):
+            app.collect('2026-09-23')
+        self.assertEqual(app.dashboard('2026-09-23')['edition']['status'],'partial')
+        # One-line bulletins are counted but are not a fault while the source still yields articles.
+        brief=article.replace('公共服务政策材料。'*40,'仪式今日举行。')
+        def mixed(url,**kw):return (listing if url==source['url'] else brief if url.endswith('/p0') else article),url
+        with app.db() as c:c.execute('DELETE FROM edition_items');c.execute('DELETE FROM articles')
+        with patch('app.active_sources',return_value=[source]),patch('app.request_url',side_effect=mixed),patch('app.llm'):
+            app.collect('2026-09-23')
+        edition=app.dashboard('2026-09-23')['edition']
+        self.assertEqual((edition['report'][0]['short'],edition['report'][0]['failed'],edition['status']),(1,0,'ready'))
+        def only_brief(url,**kw):return (listing if url==source['url'] else brief),url
+        with app.db() as c:c.execute('DELETE FROM edition_items');c.execute('DELETE FROM articles')
+        with patch('app.active_sources',return_value=[source]),patch('app.request_url',side_effect=only_brief),patch('app.llm'):
+            app.collect('2026-09-23')
+        self.assertEqual(app.dashboard('2026-09-23')['edition']['status'],'partial')
+
     def test_readded_province_reconnects_old_articles_without_losing_notes(self):
         first=self.registry.save(self.verified(),True)
         source=next(s for s in self.registry.sources() if s['id']==first['id'])

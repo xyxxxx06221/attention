@@ -362,7 +362,7 @@ def collect(day=None,_locked=False):
  try:
   for source in [s for s in active_sources() if s['enabled']]:
    JOB['message']='正在收集：'+source['name']
-   entry={'source':source['name'],'id':source['id'],'status':'ok','found':0,'included':0,'failed':0,'uncertain':0,'date_only':0,'bounded':False}
+   entry={'source':source['name'],'id':source['id'],'status':'ok','found':0,'included':0,'failed':0,'short':0,'uncertain':0,'date_only':0,'bounded':False}
    try:
     raw,_=request_url(source['url'],official=True);links=candidate_links(source,raw);entry['found']=len(links);entry['bounded']=len(links)>45
     # Bounded source discovery is reported; never claim exhaustive coverage.
@@ -380,6 +380,8 @@ def collect(day=None,_locked=False):
        if not parsed['published']:return None,'undated'
        pub=dt.datetime.fromisoformat(parsed['published'])
        if not in_edition(parsed['published'],parsed['precision'],start,end):return None,'old'
+       # A one-line bulletin is below the 100-character archive floor: counted, not a fetch failure.
+       if len(parsed['body'])<100:return None,'short'
        aid=store_article(final,parsed,source)
       if not parsed['published']:return None,'undated'
       if parsed['precision']=='day':
@@ -394,6 +396,7 @@ def collect(day=None,_locked=False):
       if status=='undated':entry['uncertain']+=1
       if status=='date_only':entry['date_only']+=1
       if status=='failed':entry['failed']+=1
+      if status=='short':entry['short']+=1
    except Exception as e:entry.update(status='error',error=str(e))
    report.append(entry)
   eligible=list(dict.fromkeys(eligible));JOB['message']='正在整理事件与阅读简报'
@@ -436,7 +439,9 @@ def collect(day=None,_locked=False):
    if not parent:mains.append(a)
    items.append((a['id'],parent))
   mains.sort(key=lambda a:-a['score']);counts={r:sum(a['region']==r for a in mains) for r in active};mins=sum(a['minutes'] for a in mains)
-  has_issue=any(r.get('failed') or r.get('status')=='error' or r.get('bounded') or r.get('uncertain') for r in report)
+  # The 45-candidate cap (bounded) and too-short bulletins (short) are recorded in the report but are not faults,
+  # unless a source yields only short texts, which suggests its page structure changed.
+  has_issue=any(r.get('failed') or r.get('status')=='error' or r.get('uncertain') or (r.get('short') and not r.get('included')) for r in report)
   status='preparing' if now()<end else ('partial' if has_issue else 'ready')
   brief="一、阅文安排\n\n"+"、".join(f"{REGIONS.get(r,r)} {counts[r]} 个事件" for r in active)+f"，原文预计共需 {mins} 分钟。"
   if mains:brief+='\n\n二、重点事项\n\n'+'；'.join(a['title'] for a in mains[:2])+'。'
@@ -788,7 +793,7 @@ class Handler(BaseHTTPRequestHandler):
      result={'exported_at':stamp(),'articles':[dict(r) for r in c.execute('SELECT * FROM articles WHERE deleted=0')],'notes':[dict(r) for r in c.execute('SELECT * FROM notes')],'messages':[dict(r) for r in c.execute('SELECT * FROM messages')],'editions':[dict(r) for r in c.execute('SELECT * FROM editions')]}
      for table in ['dossiers','dossier_items','documents','meeting_minutes','message_meta','message_trash','activity','conversations','daily_reports','document_edits','document_versions','resource_trash']:result[table]=[dict(r) for r in c.execute('SELECT * FROM '+table)]
     return self.send(result)
-   files={'/':'index.html','/app.js':'app.js','/format.js':'format.js','/workbench.js':'workbench.js','/style.css':'style.css','/design.css':'design.css','/focus.css':'focus.css','/focus.js':'focus.js','/icons.woff2':'vendor/framework7/Framework7Icons-Regular.woff2','/reading-font.woff':'vendor/noto-sans-sc/NotoSansSC.woff','/attention.js':'attention.js','/logo.png':'logo.png','/wordmark.png':'wordmark.png','/release.js':'release.js','/release.css':'release.css'}
+   files={'/':'index.html','/app.js':'app.js','/format.js':'format.js','/workbench.js':'workbench.js','/tokens.css':'tokens.css','/components.css':'components.css','/shell.css':'shell.css','/reading.css':'reading.css','/theme.js':'theme.js','/focus.js':'focus.js','/icons.woff2':'vendor/framework7/Framework7Icons-Regular.woff2','/reading-font.woff':'vendor/noto-sans-sc/NotoSansSC.woff','/attention.js':'attention.js','/logo.png':'logo.png','/wordmark.png':'wordmark.png','/release.js':'release.js'}
    if path not in files:return self.send({'error':'不存在'},404)
    p=ROOT/'dist'/files[path];data=p.read_bytes();self.send_response(200);self.send_header('Content-Type',{'html':'text/html; charset=utf-8','js':'text/javascript; charset=utf-8','css':'text/css; charset=utf-8','png':'image/png','woff2':'font/woff2','woff':'font/woff'}[p.suffix[1:]]);self.send_header('Content-Length',str(len(data)));self.send_header('X-Content-Type-Options','nosniff');self.send_header('Referrer-Policy','no-referrer');self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'");self.end_headers();self.wfile.write(data)
   except (ValueError,KeyError) as e:self.send({'error':str(e)},400)
