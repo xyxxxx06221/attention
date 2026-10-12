@@ -46,7 +46,7 @@
 需要 **Python 3.10 或更新版本**、系统自带的 `curl` 和一个现代浏览器。后端只用 Python 标准库，前端是原生 HTML、CSS 和 JavaScript，**不需要 `pip install`，也不需要 `npm install`**。
 
 ```bash
-git clone -b refactor/observer-style https://github.com/xyxxxx06221/attention.git
+git clone https://github.com/xyxxxx06221/attention.git
 cd attention
 ```
 
@@ -226,7 +226,7 @@ Node.js 只用于运行前端测试，日常使用不需要。测试使用临时
 ```bash
 sudo useradd --system --home-dir /var/lib/zhuyi --shell /usr/sbin/nologin zhuyi
 sudo install -d -o zhuyi -g zhuyi -m 700 /var/lib/zhuyi
-sudo git clone -b refactor/observer-style https://github.com/xyxxxx06221/attention.git /opt/zhuyi
+sudo git clone https://github.com/xyxxxx06221/attention.git /opt/zhuyi
 ```
 
 **2. 服务** `/etc/systemd/system/zhuyi.service`
