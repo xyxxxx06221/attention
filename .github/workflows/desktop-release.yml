@@ -1,8 +1,9 @@
-name: Build and publish desktop v1.0.0
+name: Build and publish desktop packages
 
 on:
   push:
-    branches: [release/zhuyi-v1.0.0]
+    branches: [main]
+    paths: [version.py]
   workflow_dispatch:
 
 permissions:
@@ -72,8 +73,9 @@ jobs:
           set -euo pipefail
           test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 3
           test "$(find . -maxdepth 1 -name '*.sha256' | wc -l)" -eq 3
+          version=$(python3 -c "import sys; sys.path.insert(0, '..'); from version import VERSION; print(VERSION)")
           for target in Windows-x64 macOS-arm64 macOS-x64; do
-            sha256sum --check "Zhuyi-v1.0.0-${target}.zip.sha256"
+            sha256sum --check "Zhuyi-v${version}-${target}.zip.sha256"
           done
       - name: Create release without replacing an existing release
         shell: bash
@@ -81,10 +83,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=v1.0.0-desktop
+          version=$(python3 -c "from version import VERSION; print(VERSION)")
+          tag="v${version}-desktop"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo 'This release already exists; refusing to replace its downloads.'
             exit 1
           fi
-          gh release create "$tag" packages/* --target "$GITHUB_SHA" --draft --title '主一 v1.0.0 · Windows 与 Mac' --notes-file docs/desktop-release-notes.md
+          gh release create "$tag" packages/* --target "$GITHUB_SHA" --draft --title "主一 v${version} · Windows 与 Mac" --notes-file docs/desktop-release-notes.md
           gh release edit "$tag" --draft=false --latest

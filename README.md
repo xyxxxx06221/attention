@@ -76,7 +76,17 @@ python3 tools/review_ui.py
 
 ### 桌面安装包
 
-[Releases 页面](https://github.com/xyxxxx06221/attention/releases/tag/v1.0.0-desktop) 提供 Windows 与 macOS 的免安装包，解压后双击即可，不需要 Python。这些安装包构建于界面重做之前，功能相同、界面是上一版；要使用本页所示的新界面，请按上面的方式从源码运行。
+不想装 Python，可以直接下载免安装包，解压后双击即可：
+
+| 系统 | 下载 | 启动方式 |
+| --- | --- | --- |
+| Windows 10 / 11 · 64 位 | [Zhuyi-v1.1.0-Windows-x64.zip](https://github.com/xyxxxx06221/attention/releases/download/v1.1.0-desktop/Zhuyi-v1.1.0-Windows-x64.zip) | 解压完整文件夹，双击 `Zhuyi.exe` |
+| macOS · Apple 芯片 | [Zhuyi-v1.1.0-macOS-arm64.zip](https://github.com/xyxxxx06221/attention/releases/download/v1.1.0-desktop/Zhuyi-v1.1.0-macOS-arm64.zip) | 解压后把 `Zhuyi.app` 拖入「应用程序」并打开 |
+| macOS · Intel 芯片 | [Zhuyi-v1.1.0-macOS-x64.zip](https://github.com/xyxxxx06221/attention/releases/download/v1.1.0-desktop/Zhuyi-v1.1.0-macOS-x64.zip) | 解压后把 `Zhuyi.app` 拖入「应用程序」并打开 |
+
+[全部版本、更新说明与 SHA-256 校验文件](https://github.com/xyxxxx06221/attention/releases)
+
+桌面程序启动本机服务并在默认浏览器打开工作台；保持控制窗运行即可继续使用。安装包没有商业代码签名，macOS 未经 Apple 公证，系统可能提示无法验证开发者：请核对下载来源和校验值，再按系统的安全设置决定是否打开。从 v1.0.0 升级不需要迁移，两个版本使用同一个数据目录。
 
 ## 从一份材料开始
 

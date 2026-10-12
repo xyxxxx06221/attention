@@ -159,7 +159,7 @@ def request_url(url,payload=None,headers=None,official=False,ai=False):
     address=addresses[0][4][0];address='['+address+']' if ':' in address else address
     resolved=['--noproxy','*','--resolve',f'{u.hostname}:{port}:{address}']
    args=['curl','--silent','--show-error','--max-time','90' if ai else '18','--connect-timeout','10','--max-filesize','8000000','--dump-header',str(hp),'--output',str(bp),'--write-out','%{http_code}','--config','-']+resolved
-   config='url = '+json.dumps(url,ensure_ascii=False)+'\nuser-agent = "ZhuyiLocalReader/1.0.0"\n'
+   config='url = '+json.dumps(url,ensure_ascii=False)+'\nuser-agent = "ZhuyiLocalReader/'+VERSION+'"\n'
    for k,v in (headers or {}).items():config+='header = '+json.dumps(k+': '+v,ensure_ascii=False)+'\n'
    if payload is not None:config+='header = "Content-Type: application/json"\ndata = '+json.dumps(json.dumps(payload,ensure_ascii=False),ensure_ascii=False)+'\n'
    # Detached Windows servers otherwise open a console for every curl request.

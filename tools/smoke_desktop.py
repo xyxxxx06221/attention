@@ -8,6 +8,9 @@ import tempfile
 import time
 import urllib.request
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from version import VERSION
+
 
 def main():
     executable = Path(sys.argv[1]).resolve()
@@ -37,7 +40,7 @@ def main():
                         time.sleep(.25)
                 else:
                     raise AssertionError('Packaged app did not start')
-                assert runtime['application'] == 'zhuyi-local-v1' and runtime['version'] == '1.0.0'
+                assert runtime['application'] == 'zhuyi-local-v1' and runtime['version'] == VERSION
                 assert Path(runtime['data_directory']).resolve() == data.resolve()
                 for path in ('/', '/app.js', '/release.js', '/theme.js', '/tokens.css', '/components.css', '/shell.css', '/reading.css', '/wordmark.png', '/icons.woff2', '/reading-font.woff'):
                     with opener.open(base + path, timeout=10) as response:
